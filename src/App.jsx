@@ -30,20 +30,17 @@ function App() {
   // ======== Prediction ========
   const getPrediction = async (subject) => {
     try {
-      const res = a// predict
-await fetch(`${backendUrl}/predict`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ level, difficulty, importance, days_left, focus })
-});
-
-// generate plan
-await fetch(`${backendUrl}/generate`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(subjects)
-});
-    
+      const res = await fetch(`${backendUrl}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          level: subject.level,
+          difficulty: subject.difficulty,
+          importance: subject.importance,
+          days_left: subject.days,
+          focus: subject.focus,
+        }),
+      });
       if (!res.ok) throw new Error("Failed prediction");
       return await res.json();
     } catch (err) {
@@ -81,7 +78,7 @@ await fetch(`${backendUrl}/generate`, {
       const res = await fetch(`${backendUrl}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(subjects)
+        body: JSON.stringify(subjects),
       });
       if (!res.ok) throw new Error("Failed to generate plan");
       const data = await res.json();
@@ -95,8 +92,8 @@ await fetch(`${backendUrl}/generate`, {
 
   // ======== Color Helper ========
   const getColor = (name) => {
-    const colors = ["#a2d5f2","#f2a2a2","#a2f2b5","#f2e2a2","#c3a2f2","#f2c3a2"];
-    return colors[name.split("").reduce((acc,c)=>acc+c.charCodeAt(0),0)%colors.length];
+    const colors = ["#054a72", "#874747", "#a2d5f2", "#f2a2a2", "#a2f2b5", "#f2e2a2"];
+    return colors[name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % colors.length];
   };
 
   // ======== Render ========
@@ -105,20 +102,20 @@ await fetch(`${backendUrl}/generate`, {
       <h1>Study Planner</h1>
 
       <div className="inputs">
-        <input placeholder="Name" value={name} onChange={e=>setName(e.target.value)}/>
-        <input type="number" placeholder="Level" value={level} onChange={e=>setLevel(e.target.value)}/>
-        <input type="number" placeholder="Difficulty" value={difficulty} onChange={e=>setDifficulty(e.target.value)}/>
-        <input type="number" placeholder="Importance" value={importance} onChange={e=>setImportance(e.target.value)}/>
-        <input type="number" placeholder="Days" value={days} onChange={e=>setDays(e.target.value)}/>
-        <input type="number" placeholder="Focus" value={focus} onChange={e=>setFocus(e.target.value)}/>
+        <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <input type="number" placeholder="Level" value={level} onChange={(e) => setLevel(e.target.value)} />
+        <input type="number" placeholder="Difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)} />
+        <input type="number" placeholder="Importance" value={importance} onChange={(e) => setImportance(e.target.value)} />
+        <input type="number" placeholder="Days" value={days} onChange={(e) => setDays(e.target.value)} />
+        <input type="number" placeholder="Focus" value={focus} onChange={(e) => setFocus(e.target.value)} />
         <button onClick={addSubject}>Add Subject</button>
       </div>
 
       {subjects.length > 0 && (
         <ul>
-          {subjects.map((s,i)=>(
-            <li key={i} style={{backgroundColor:getColor(s.name)}}>
-              {s.name} — {s.predicted_hours}h — {s.delay_probability}% delay
+          {subjects.map((s, i) => (
+            <li key={i} style={{ backgroundColor: getColor(s.name) }}>
+              {s.name} — {s.predicted_hours ?? "N/A"}h — {s.delay_probability ?? "N/A"}% delay
             </li>
           ))}
         </ul>
@@ -126,16 +123,16 @@ await fetch(`${backendUrl}/generate`, {
 
       <button onClick={generatePlan}>Generate Weekly Plan</button>
       {loading && <p>Loading...</p>}
-      {error && <p style={{color:"red"}}>{error}</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       {Object.keys(weeklyPlan).length > 0 && (
         <div className="week-table">
-          {Object.entries(weeklyPlan).map(([day, subs])=>(
+          {Object.entries(weeklyPlan).map(([day, subs]) => (
             <div key={day}>
               <h3>{day}</h3>
               <ul>
-                {subs.map((s,i)=>(
-                  <li key={i} style={{backgroundColor:getColor(s.name)}}>
+                {subs.map((s, i) => (
+                  <li key={i} style={{ backgroundColor: getColor(s.name) }}>
                     {s.name} — {s.hours} hrs
                   </li>
                 ))}
