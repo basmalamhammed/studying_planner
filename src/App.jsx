@@ -10,22 +10,25 @@ function App() {
   const [focus, setFocus] = useState("");
 
   const [subjects, setSubjects] = useState([]);
-  const [finalTable, setFinalTable] = useState({});
-  const [editIndex, setEditIndex] = useState(null);
+  const [weeklyPlan, setWeeklyPlan] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const validateInput = (s) => {
-    if (!s.name) return "Needed name of subject";
-    if (s.level <= 0) return "Level should be more than 0";
-    if (s.difficulty <= 0) return "Difficulty should be more than 0";
-    if (s.importance <= 0) return "Importance should be more than 0";
-    if (s.days <= 0) return "Days should be more than 0";
-    if (s.focus <= 0 || s.focus > 5) return "Focus should be between 1 and 5";
+  const backendUrl = "https://studyingplanner-production.up.railway.app";
+
+  const validate = (s) => {
+    if (!s.name) return "Enter subject name";
+    if (s.level < 1 || s.level > 5) return "Level 1-5";
+    if (s.difficulty < 1 || s.difficulty > 5) return "Difficulty 1-5";
+    if (s.importance < 1 || s.importance > 5) return "Importance 1-5";
+    if (s.days < 1) return "Days should be > 0";
+    if (s.focus < 1 || s.focus > 5) return "Focus 1-5";
     return null;
   };
 
   const getPrediction = async (subject) => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/predict", {
+      const res = await fetch(`${backendUrl}/schedule`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -33,158 +36,102 @@ function App() {
           difficulty: subject.difficulty,
           importance: subject.importance,
           days_left: subject.days,
-          focus: subject.focus
-        })
+          focus: subject.focus,
+        }),
       });
-      const data = await res.json();
-      return data;
+      if (!res.ok) throw new Error("Failed prediction");
+      return await res.json();
     } catch (err) {
+      console.error(err);
       return null;
     }
   };
 
-  const handleAddOrEdit = async () => {
-    const newSubject = {
+  const addSubject = async () => {
+    const newSub = {
       name,
       level: Number(level),
       difficulty: Number(difficulty),
       importance: Number(importance),
       days: Number(days),
-      focus: Number(focus || 1),
+      focus: Number(focus || 1)
     };
+    const err = validate(newSub);
+    if (err) return alert(err);
 
-    const error = validateInput(newSubject);
-    if (error) return alert(error);
+    const prediction = await getPrediction(newSub);
+    if (prediction) Object.assign(newSub, prediction);
 
-    const prediction = await getPrediction(newSubject);
-    if (prediction) {
-      newSubject.predicted_hours = prediction.predicted_hours;
-      newSubject.delay_probability = prediction.delay_probability;
-      newSubject.warning = prediction.warning;
-    }
-
-    if (editIndex !== null) {
-      const updated = [...subjects];
-      updated[editIndex] = newSubject;
-      setSubjects(updated);
-      setEditIndex(null);
-    } else {
-      setSubjects([...subjects, newSubject]);
-    }
-
-    setName(""); setLevel(""); setDifficulty("");
-    setImportance(""); setDays(""); setFocus("");
+    setSubjects([...subjects, newSub]);
+    setName(""); setLevel(""); setDifficulty(""); setImportance(""); setDays(""); setFocus("");
   };
 
-  const handleEdit = (index) => {
-    const s = subjects[index];
-    setName(s.name); setLevel(s.level); setDifficulty(s.difficulty);
-    setImportance(s.importance); setDays(s.days); setFocus(s.focus);
-    setEditIndex(index);
-  };
-
-  const handleDelete = (index) => {
-    const updated = subjects.filter((_, i) => i !== index);
-    setSubjects(updated);
-  };
-
-  const generateTable = () => {
-    if (subjects.length === 0) return alert("Please add a subject first!");
-
-    fetch("http://127.0.0.1:5000/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(subjects),
-    })
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        if (!data || Object.keys(data).length === 0) {
-          alert("Please make sure the data is correct!");
-          return;
-        }
-        setFinalTable(data);
-      })
-      .catch(err => {
-        console.error("Fetch error:", err);
-        alert("Connection error. Make sure Flask is running.");
+  const generatePlan = async () => {
+    if (subjects.length === 0) return alert("Add subjects first!");
+    setLoading(true); setError("");
+    try {
+      const res = await fetch(`${backendUrl}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(subjects)
       });
+      if (!res.ok) throw new Error("Failed to generate plan");
+      const data = await res.json();
+      setWeeklyPlan(data);
+    } catch (err) {
+      setError("Connection error. Make sure backend is running.");
+      console.error(err);
+    }
+    setLoading(false);
   };
 
   const getColor = (name) => {
-    const colors = [
-      "rgba(0, 100, 200, 0.25)",
-      "rgba(0, 70, 180, 0.25)",
-      "rgba(0, 120, 220, 0.25)",
-      "rgba(0, 55, 160, 0.25)",
-      "rgba(0, 140, 255, 0.2)",
-      "rgba(10, 80, 190, 0.25)"
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
-    return colors[hash % colors.length];
+    const colors = ["#a2d5f2","#f2a2a2","#a2f2b5","#f2e2a2","#c3a2f2","#f2c3a2"];
+    return colors[name.split("").reduce((acc,c)=>acc+c.charCodeAt(0),0)%colors.length];
   };
 
   return (
     <div className="App">
       <h1>Study Planner</h1>
-
       <div className="inputs">
-        <input placeholder="Subject name" value={name} onChange={e => setName(e.target.value)} />
-        <input placeholder="Level (1-5)" type="number" value={level} onChange={e => setLevel(e.target.value)} />
-        <input placeholder="Difficulty (1-5)" type="number" value={difficulty} onChange={e => setDifficulty(e.target.value)} />
-        <input placeholder="Importance (1-5)" type="number" value={importance} onChange={e => setImportance(e.target.value)} />
-        <input placeholder="Days left" type="number" value={days} onChange={e => setDays(e.target.value)} />
-        <input placeholder="Focus (1-5)" type="number" value={focus} onChange={e => setFocus(e.target.value)} />
-        <button onClick={handleAddOrEdit}>{editIndex !== null ? "Update" : "Add"}</button>
+        <input placeholder="Name" value={name} onChange={e=>setName(e.target.value)}/>
+        <input type="number" placeholder="Level" value={level} onChange={e=>setLevel(e.target.value)}/>
+        <input type="number" placeholder="Difficulty" value={difficulty} onChange={e=>setDifficulty(e.target.value)}/>
+        <input type="number" placeholder="Importance" value={importance} onChange={e=>setImportance(e.target.value)}/>
+        <input type="number" placeholder="Days" value={days} onChange={e=>setDays(e.target.value)}/>
+        <input type="number" placeholder="Focus" value={focus} onChange={e=>setFocus(e.target.value)}/>
+        <button onClick={addSubject}>Add Subject</button>
       </div>
 
-      <h2>Subjects Added</h2>
-      {subjects.length === 0 ? (
-        <p>No subjects yet — add one above</p>
-      ) : (
-        <ul className="subject-list">
-          {subjects.map((s, i) => (
-            <li key={i} style={{ backgroundColor: getColor(s.name) }}>
-              <span>{s.name} — Focus: {s.focus} — Days: {s.days}</span>
-              {s.predicted_hours && (
-                <span className="prediction">
-                   {s.predicted_hours}h
-                  {s.warning
-                    ? <span className="warning">  {s.delay_probability}% delay risk</span>
-                    : <span className="safe">  {s.delay_probability}% delay risk</span>
-                  }
-                </span>
-              )}
-              <button onClick={() => handleEdit(i)}>Edit</button>
-              <button onClick={() => handleDelete(i)}>Delete</button>
+      {subjects.length > 0 && (
+        <ul>
+          {subjects.map((s,i)=>(
+            <li key={i} style={{backgroundColor:getColor(s.name)}}>
+              {s.name} — {s.predicted_hours}h — {s.delay_probability}% delay
             </li>
           ))}
         </ul>
       )}
 
-      <button className="generate-btn" onClick={generateTable}>Generate Weekly Plan</button>
+      <button onClick={generatePlan}>Generate Weekly Plan</button>
+      {loading && <p>Loading...</p>}
+      {error && <p style={{color:"red"}}>{error}</p>}
 
-      {Object.keys(finalTable).length > 0 && (
-        <>
-          <h2>Weekly Plan</h2>
-          <div className="week-table">
-            {Object.keys(finalTable).map(day => (
-              <div key={day} className="day-column">
-                <h3>{day}</h3>
-                <ul>
-                  {finalTable[day].map((sub, i) => (
-                    <li key={i} style={{ backgroundColor: getColor(sub.name) }}>
-                      {sub.name}<br />{sub.hours} hrs
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </>
+      {Object.keys(weeklyPlan).length > 0 && (
+        <div className="week-table">
+          {Object.entries(weeklyPlan).map(([day, subs])=>(
+            <div key={day}>
+              <h3>{day}</h3>
+              <ul>
+                {subs.map((s,i)=>(
+                  <li key={i} style={{backgroundColor:getColor(s.name)}}>
+                    {s.name} — {s.hours} hrs
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
