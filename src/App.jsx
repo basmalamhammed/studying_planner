@@ -8,7 +8,6 @@ function App() {
   const [importance, setImportance] = useState("");
   const [days, setDays] = useState("");
   const [focus, setFocus] = useState("");
-
   const [subjects, setSubjects] = useState([]);
   const [weeklyPlan, setWeeklyPlan] = useState({});
   const [loading, setLoading] = useState(false);
@@ -16,7 +15,6 @@ function App() {
 
   const backendUrl = "https://studyingplanner-production-caf4.up.railway.app";
 
-  // ======== Validation ========
   const validate = (s) => {
     if (!s.name) return "Enter subject name";
     if (s.level < 1 || s.level > 5) return "Level 1-5";
@@ -27,7 +25,6 @@ function App() {
     return null;
   };
 
-  // ======== Prediction ========
   const getPrediction = async (subject) => {
     try {
       const res = await fetch(`${backendUrl}/predict`, {
@@ -49,7 +46,6 @@ function App() {
     }
   };
 
-  // ======== Add Subject ========
   const addSubject = async () => {
     const newSub = {
       name,
@@ -59,21 +55,23 @@ function App() {
       days: Number(days),
       focus: Number(focus || 1),
     };
-
     const err = validate(newSub);
     if (err) return alert(err);
-
     const prediction = await getPrediction(newSub);
     if (prediction) Object.assign(newSub, prediction);
-
     setSubjects([...subjects, newSub]);
-    setName(""); setLevel(""); setDifficulty(""); setImportance(""); setDays(""); setFocus("");
+    setName(""); setLevel(""); setDifficulty("");
+    setImportance(""); setDays(""); setFocus("");
   };
 
-  // ======== Generate Weekly Plan ========
+  const handleDelete = (index) => {
+    setSubjects(subjects.filter((_, i) => i !== index));
+  };
+
   const generatePlan = async () => {
     if (subjects.length === 0) return alert("Add subjects first!");
-    setLoading(true); setError("");
+    setLoading(true);
+    setError("");
     try {
       const res = await fetch(`${backendUrl}/generate`, {
         method: "POST",
@@ -90,17 +88,21 @@ function App() {
     setLoading(false);
   };
 
-  // ======== Color Helper ========
   const getColor = (name) => {
-    const colors = ["#054a72", "#874747", "#a2d5f2", "#f2a2a2", "#a2f2b5", "#f2e2a2"];
+    const colors = [
+      "rgba(0, 100, 200, 0.3)",
+      "rgba(0, 70, 180, 0.3)",
+      "rgba(0, 120, 220, 0.3)",
+      "rgba(0, 55, 160, 0.3)",
+      "rgba(0, 140, 255, 0.25)",
+      "rgba(10, 80, 190, 0.3)"
+    ];
     return colors[name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % colors.length];
   };
 
-  // ======== Render ========
   return (
     <div className="App">
       <h1>Study Planner</h1>
-
       <div className="inputs">
         <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
         <input type="number" placeholder="Level" value={level} onChange={(e) => setLevel(e.target.value)} />
@@ -108,38 +110,56 @@ function App() {
         <input type="number" placeholder="Importance" value={importance} onChange={(e) => setImportance(e.target.value)} />
         <input type="number" placeholder="Days" value={days} onChange={(e) => setDays(e.target.value)} />
         <input type="number" placeholder="Focus" value={focus} onChange={(e) => setFocus(e.target.value)} />
-        <button onClick={addSubject}>Add Subject</button>
+        <button onClick={addSubject}>Add</button>
       </div>
 
-      {subjects.length > 0 && (
-        <ul>
+      <h2>Subjects Added</h2>
+      {subjects.length === 0 ? (
+        <p>No subjects yet — add one above</p>
+      ) : (
+        <ul className="subject-list">
           {subjects.map((s, i) => (
             <li key={i} style={{ backgroundColor: getColor(s.name) }}>
-              {s.name} — {s.predicted_hours ?? "N/A"}h — {s.delay_probability ?? "N/A"}% delay
+              <span className="subject-name">{s.name} — Focus: {s.focus} — Days: {s.days}</span>
+              {s.predicted_hours && (
+                <span className="prediction">
+                  {s.predicted_hours}h
+                  {s.warning
+                    ? <span className="warning"> {s.delay_probability}% delay risk</span>
+                    : <span className="safe"> {s.delay_probability}% delay risk</span>
+                  }
+                </span>
+              )}
+              <button className="btn-delete" onClick={() => handleDelete(i)}>Delete</button>
             </li>
           ))}
         </ul>
       )}
 
-      <button onClick={generatePlan}>Generate Weekly Plan</button>
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button className="generate-btn" onClick={generatePlan}>
+        {loading ? "Generating..." : "Generate Weekly Plan"}
+      </button>
+
+      {error && <p className="error-msg">{error}</p>}
 
       {Object.keys(weeklyPlan).length > 0 && (
-        <div className="week-table">
-          {Object.entries(weeklyPlan).map(([day, subs]) => (
-            <div key={day}>
-              <h3>{day}</h3>
-              <ul>
-                {subs.map((s, i) => (
-                  <li key={i} style={{ backgroundColor: getColor(s.name) }}>
-                    {s.name} — {s.hours} hrs
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+        <>
+          <h2>Weekly Plan</h2>
+          <div className="week-table">
+            {Object.entries(weeklyPlan).map(([day, subs]) => (
+              <div key={day} className="day-column">
+                <h3>{day}</h3>
+                <ul>
+                  {subs.map((s, i) => (
+                    <li key={i} style={{ backgroundColor: getColor(s.name) }}>
+                      {s.name} - {s.hours} hrs
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
