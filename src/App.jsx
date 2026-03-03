@@ -14,7 +14,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const backendUrl = "https://studyingplanner-production-caf4.up.railway.app/generate";
+  const backendUrl = "https://studyingplanner-production-caf4.up.railway.app";
 
   // ======== Validation ========
   const validate = (s) => {
@@ -30,17 +30,20 @@ function App() {
   // ======== Prediction ========
   const getPrediction = async (subject) => {
     try {
-      const res = await fetch(`${backendUrl}/predict`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          level: subject.level,
-          difficulty: subject.difficulty,
-          importance: subject.importance,
-          days_left: subject.days,
-          focus: subject.focus,
-        }),
-      });
+      const res = a// predict
+await fetch(`${backendUrl}/predict`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ level, difficulty, importance, days_left, focus })
+});
+
+// generate plan
+await fetch(`${backendUrl}/generate`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(subjects)
+});
+    
       if (!res.ok) throw new Error("Failed prediction");
       return await res.json();
     } catch (err) {
