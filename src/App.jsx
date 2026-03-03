@@ -16,6 +16,7 @@ function App() {
 
   const backendUrl = "https://studyingplanner-production.up.railway.app";
 
+  // ======== Validation ========
   const validate = (s) => {
     if (!s.name) return "Enter subject name";
     if (s.level < 1 || s.level > 5) return "Level 1-5";
@@ -26,9 +27,10 @@ function App() {
     return null;
   };
 
+  // ======== Prediction ========
   const getPrediction = async (subject) => {
     try {
-      const res = await fetch(`${backendUrl}/schedule`, {
+      const res = await fetch(`${backendUrl}/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -47,6 +49,7 @@ function App() {
     }
   };
 
+  // ======== Add Subject ========
   const addSubject = async () => {
     const newSub = {
       name,
@@ -54,8 +57,9 @@ function App() {
       difficulty: Number(difficulty),
       importance: Number(importance),
       days: Number(days),
-      focus: Number(focus || 1)
+      focus: Number(focus || 1),
     };
+
     const err = validate(newSub);
     if (err) return alert(err);
 
@@ -66,6 +70,7 @@ function App() {
     setName(""); setLevel(""); setDifficulty(""); setImportance(""); setDays(""); setFocus("");
   };
 
+  // ======== Generate Weekly Plan ========
   const generatePlan = async () => {
     if (subjects.length === 0) return alert("Add subjects first!");
     setLoading(true); setError("");
@@ -85,14 +90,17 @@ function App() {
     setLoading(false);
   };
 
+  // ======== Color Helper ========
   const getColor = (name) => {
     const colors = ["#a2d5f2","#f2a2a2","#a2f2b5","#f2e2a2","#c3a2f2","#f2c3a2"];
     return colors[name.split("").reduce((acc,c)=>acc+c.charCodeAt(0),0)%colors.length];
   };
 
+  // ======== Render ========
   return (
     <div className="App">
       <h1>Study Planner</h1>
+
       <div className="inputs">
         <input placeholder="Name" value={name} onChange={e=>setName(e.target.value)}/>
         <input type="number" placeholder="Level" value={level} onChange={e=>setLevel(e.target.value)}/>
