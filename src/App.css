@@ -368,3 +368,34 @@ p::before {
   color: #00cc66;
   margin-left: 6px;
 }
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+.btn-delete {
+  border-color: #ff3366;
+  color: #ff3366;
+  margin-left: auto;
+}
+
+.btn-delete:hover {
+  background: rgba(255, 51, 102, 0.1);
+  color: white;
+}
+
+.subject-name {
+  flex: 1;
+  color: var(--text);
+}
+
+.error-msg {
+  color: #ff3366;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  padding: 12px 16px;
+  border: 1px solid #ff3366;
+  border-radius: 3px;
+}
+
+.error-msg::before { content: none; }
