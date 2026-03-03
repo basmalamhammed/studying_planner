@@ -31,7 +31,7 @@ def train_and_save():
     clf.fit(X, df["delayed"])
     with open("classification_model.pkl","wb") as f:
         pickle.dump(clf, f)
-    print("✅ Models ready!")
+    print(" Models ready!")
 
 if not os.path.exists("regression_model.pkl"):
     train_and_save()
