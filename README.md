@@ -1,20 +1,154 @@
-<<<<<<< HEAD
-# React + Vite
+# 📚 Study Planner — ML-Powered Study Scheduler
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack web application that helps students plan their weekly study schedule using Machine Learning predictions.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🌐 Live Demo
 
-## React Compiler
+- **Frontend:** https://studying-planner-vge6.vercel.app
+- **Backend API:** https://studyingplanner-production-caf4.up.railway.app
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🧠 What Does It Do?
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-=======
-# studying_planner
->>>>>>> 0f919aa76bfc6aacece0dfd525867469b32c6f02
+The user enters a subject with 5 parameters:
+
+| Parameter | Description |
+|-----------|-------------|
+| **Name** | Subject name |
+| **Level** | Current knowledge level (1-5) |
+| **Difficulty** | How hard is the subject (1-5) |
+| **Importance** | How important is it (1-5) |
+| **Days Left** | Days until exam/deadline |
+| **Focus** | Ability to concentrate (1-5) |
+
+The app then:
+1. **Predicts** how many hours you need to study
+2. **Calculates** the probability of delay/procrastination
+3. **Generates** an optimized weekly study schedule
+
+---
+
+## 🏗️ Project Structure
+
+```
+studying_planner/
+├── back_end/
+│   ├── app.py              # Flask API
+│   ├── planner.py          # Weekly schedule logic
+│   ├── startup.py          # Auto-trains ML models on server start
+│   ├── requirements.txt    # Python dependencies
+│   ├── regression_model.pkl    # Trained hours prediction model
+│   └── classification_model.pkl # Trained delay prediction model
+└── src/
+    ├── App.jsx             # React frontend
+    └── App.css             # Cyberpunk dark theme
+```
+
+---
+
+## ⚙️ Tech Stack
+
+### Frontend
+- **React** (Vite)
+- **CSS** — Custom dark cyberpunk theme (black + blue)
+- **Deployed on:** Vercel
+
+### Backend
+- **Python + Flask** — REST API
+- **Flask-CORS** — Cross-origin support
+- **Deployed on:** Railway
+
+### Machine Learning
+- **scikit-learn** — Model training
+- **LinearRegression** — Predicts study hours (MSE: 0.241)
+- **LogisticRegression** — Predicts delay probability (Accuracy: 67.5%)
+- **1000 rows** of synthetic training data
+
+---
+
+## 🔌 API Endpoints
+
+### `POST /predict`
+Predicts study hours and delay probability.
+
+**Request:**
+```json
+{
+  "level": 2,
+  "difficulty": 4,
+  "importance": 5,
+  "days_left": 20,
+  "focus": 2
+}
+```
+
+**Response:**
+```json
+{
+  "predicted_hours": 3.1,
+  "delay_probability": 54.8,
+  "warning": false
+}
+```
+
+### `POST /generate`
+Generates an optimized weekly study plan.
+
+**Request:**
+```json
+[
+  { "name": "Math", "level": 2, "difficulty": 4, "importance": 5, "days": 20, "focus": 3 },
+  { "name": "Physics", "level": 3, "difficulty": 3, "importance": 4, "days": 15, "focus": 4 }
+]
+```
+
+**Response:**
+```json
+{
+  "Monday": [{ "name": "Math", "hours": 2.5 }],
+  "Tuesday": [{ "name": "Physics", "hours": 2.0 }]
+}
+```
+
+---
+
+## 🤖 Machine Learning Details
+
+### Data Generation
+- 1000 synthetic study sessions
+- Features: level, difficulty, importance, days_left, focus
+- Balanced dataset: 56% completed, 44% delayed
+
+### Models Trained
+| Model | Task | Result |
+|-------|------|--------|
+| LinearRegression | Predict study hours | MSE = 0.241 (~30 min error) |
+| LogisticRegression | Predict delay risk | Accuracy = 67.5% |
+
+### Why These Models?
+We tested 4 algorithms (Linear Regression, Random Forest, Decision Tree, KNN) — Linear and Logistic Regression won because the data relationships are linear by design.
+
+---
+
+## 🚀 Run Locally
+
+### Backend
+```bash
+cd back_end
+pip install -r requirements.txt
+python app.py
+```
+
+### Frontend
+```bash
+npm install
+npm run dev
+```
+
+---
+
+## 👩‍💻 Built By
+*ENG : Basmala Mohamed" 
