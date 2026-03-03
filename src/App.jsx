@@ -14,7 +14,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const backendUrl = "https://studyingplanner-production.up.railway.app";
+  const backendUrl = "https://studyingplanner-production-caf4.up.railway.app/generate";
 
   // ======== Validation ========
   const validate = (s) => {
