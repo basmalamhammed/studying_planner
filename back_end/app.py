@@ -3,7 +3,7 @@ from flask_cors import CORS
 from planner import generate_weekly_schedule
 import pickle
 import os
-
+import startup
 app = Flask(__name__)
 # السماح لأي دومين بالوصول (مهم للـ React على أي جهاز)
 CORS(app, resources={r"/*": {"origins": "*"}})
